@@ -1,4 +1,3 @@
-// Login.js
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +16,16 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(data.user));
 
       alert("Login successful!");
-      navigate("/projects");
+
+      // Check the user's role to decide the redirect
+      if (data.user.role === "client") {
+        navigate("/client/dashboard");
+      } else if (data.user.role === "freelancer") {
+        navigate("/freelancer/projects");
+      } else {
+        // Fallback if no role
+        navigate("/projects");
+      }
     } catch (error) {
       console.error(error);
       alert(error.response?.data?.message || "Login failed");
