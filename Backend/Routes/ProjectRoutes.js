@@ -129,6 +129,7 @@ router.delete("/:id", protect, async (req, res) => {
 });
 
 // 7. Freelancer applies to a project (Protected, freelancer only)
+// POST /api/projects/:projectId/apply (Protected, freelancer only)
 router.post("/:projectId/apply", protect, upload.single("resume"), async (req, res) => {
   try {
     if (req.user.role !== "freelancer") {
@@ -136,7 +137,7 @@ router.post("/:projectId/apply", protect, upload.single("resume"), async (req, r
     }
 
     const { projectId } = req.params;
-    const { answers } = req.body; // e.g. an array of { questionText, answerText }
+    const { answers } = req.body;
     const project = await Project.findById(projectId);
     if (!project) return res.status(404).json({ message: "Project not found" });
 
@@ -151,15 +152,15 @@ router.post("/:projectId/apply", protect, upload.single("resume"), async (req, r
       resumeUrl = req.file.path; // e.g. "uploads/resumes/resume-123456.pdf"
     }
 
+    // Create the application subdoc
     const application = {
       freelancer: req.user._id,
       answers: [],
       resumeUrl,
-      status: "pending",
+      status: "pending",  // <-- Important: default is "pending"
     };
 
     // If answers is a JSON string, parse it
-    // otherwise, if it's already an array, just push
     let parsedAnswers = [];
     if (typeof answers === "string") {
       parsedAnswers = JSON.parse(answers);
@@ -183,6 +184,7 @@ router.post("/:projectId/apply", protect, upload.single("resume"), async (req, r
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
+
 
 // 8. Accept or Reject an application (Protected, client only)
 router.put("/:projectId/applications/:applicationId", protect, async (req, res) => {

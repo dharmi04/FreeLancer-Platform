@@ -4,8 +4,44 @@ const jwt = require("jsonwebtoken");
 const User = require("../Models/User");
 const protect = require("../middleware/authMiddleware");
 
+// ✅ Import the upload middleware
+const upload = require("../middleware/ImageMiddleware"); 
 
 const router = express.Router();
+
+// Update user profile (Protected)
+router.put("/profile", protect, upload.single("profilePicture"), async (req, res) => {
+  try {
+    if (req.user.role !== "freelancer") {
+      return res.status(403).json({ message: "Only freelancers can update profile here." });
+    }
+
+    const { bio, portfolioProjects } = req.body;
+
+    let profilePicturePath = null;
+    if (req.file) {
+      profilePicturePath = req.file.path; // Save file path
+    }
+
+    const updatedFields = {};
+    if (bio !== undefined) updatedFields.bio = bio;
+    if (portfolioProjects) {
+      updatedFields.portfolioProjects = JSON.parse(portfolioProjects);
+    }
+    if (profilePicturePath) updatedFields.profilePicture = profilePicturePath;
+
+    const user = await User.findByIdAndUpdate(req.user._id, { $set: updatedFields }, { new: true });
+
+    res.json({ message: "Profile updated successfully", user });
+  } catch (err) {
+    console.error("Error updating profile:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+module.exports = router;
+
+
 
 // Register a new user
 router.post("/register", async (req, res) => {

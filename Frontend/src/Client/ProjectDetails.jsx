@@ -141,18 +141,18 @@ const ProjectDetails = () => {
 
                   {/* Resume Link (if any) */}
                   {app.resumeUrl && (
-                    <p className="mt-2">
-                      Resume:{" "}
-                      <a
-                        href={`/${app.resumeUrl}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline"
-                      >
-                        View
-                      </a>
-                    </p>
-                  )}
+  <p className="mt-2">
+    Resume:{" "}
+    <a
+      href={`http://localhost:5000/${app.resumeUrl}`}  // <-- Use the backend's port
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 underline"
+    >
+      View
+    </a>
+  </p>
+)}
 
                   {/* Answers to Questions */}
                   {app.answers && app.answers.length > 0 && (

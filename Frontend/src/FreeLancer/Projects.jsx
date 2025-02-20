@@ -1,7 +1,7 @@
 // Projects.js
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";  // <-- Import useNavigate
-import API from "../api"; // or import axios if not using interceptor
+import { useNavigate } from "react-router-dom";  
+import API from "../api"; // or import axios if not using the interceptor
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
@@ -24,18 +24,45 @@ const Projects = () => {
 
   // Navigate to details page for a specific project
   const handleViewDetails = (projectId) => {
-    // We'll create a route like /freelancer/projects/:projectId
     navigate(`/freelancer/projects/${projectId}`);
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       {/* Header */}
-      <header className="flex justify-end items-center mb-4">
-        {user && (
-          <span className="text-gray-700 font-semibold">
-            Logged in as: {user.email}
-          </span>
+      <header className="flex justify-between items-center mb-4">
+        {/* Left side: link to Dashboard */}
+        <a
+          href="/freelancer/dashboard"
+          className="text-blue-600 hover:text-blue-800 font-semibold"
+        >
+          Dashboard
+        </a>
+
+        {/* Right side: Profile Picture + Email Tooltip */}
+        {user ? (
+          user.profilePicture ? (
+            // If the user has a profile picture, show it with a hover tooltip for email
+            <div className="relative group cursor-pointer">
+              <img
+                src={`http://localhost:5000/${user.profilePicture}`}
+                alt="Profile"
+                className="w-10 h-10 rounded-full object-cover"
+              />
+              {/* Tooltip with email on hover */}
+              <div className="absolute right-0 top-12 hidden group-hover:block bg-white text-gray-700 text-sm px-3 py-2 rounded shadow">
+                {user.email}
+              </div>
+            </div>
+          ) : (
+            // If no profile picture, just show a text fallback with email
+            <div className="text-gray-700 font-semibold">
+              Logged in as: {user.email}
+            </div>
+          )
+        ) : (
+          // If no user in localStorage, prompt login
+          <div className="text-gray-700 font-semibold">Not logged in</div>
         )}
       </header>
 

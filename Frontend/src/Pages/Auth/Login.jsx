@@ -10,21 +10,30 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post("http://localhost:5000/api/users/login", { email, password });
+      const { data } = await axios.post("http://localhost:5000/api/users/login", {
+        email,
+        password,
+      });
       // Store token & user in localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
       alert("Login successful!");
 
-      // Check the user's role to decide the redirect
-      if (data.user.role === "client") {
+      if (data.user.role === "freelancer") {
+        // Check if profile picture is set
+        if (!data.user.profilePicture || data.user.profilePicture === "") {
+          // If not set, go to setup page
+          navigate("/freelancer/setup-profile");
+        } else {
+          // Otherwise, go to freelancer dashboard
+          navigate("/freelancer/dashboard");
+        }
+      } else if (data.user.role === "client") {
         navigate("/client/dashboard");
-      } else if (data.user.role === "freelancer") {
-        navigate("/freelancer/projects");
       } else {
-        // Fallback if no role
-        navigate("/projects");
+        // fallback
+        navigate("/");
       }
     } catch (error) {
       console.error(error);
@@ -38,9 +47,7 @@ const Login = () => {
       <div className="w-1/2 flex items-center justify-center bg-blue-800 text-white p-8">
         <div className="text-center max-w-md">
           <h1 className="text-4xl font-bold mb-4">YourPlatformName</h1>
-          <p className="text-lg">
-            Login to collaborate with freelancers or manage your projects.
-          </p>
+          <p className="text-lg">Login to collaborate or manage projects.</p>
         </div>
       </div>
 
