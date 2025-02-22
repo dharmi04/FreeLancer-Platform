@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";  
 import API from "../api"; // or import axios if not using the interceptor
+import FreeLancerNavBar from "./Components/FreeLancerNavBar";
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
@@ -28,9 +29,10 @@ const Projects = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen bg-gray-100">
+      <FreeLancerNavBar />
       {/* Header */}
-      <header className="flex justify-between items-center mb-4">
+      <header className="flex justify-between items-center mb-4 p-4">
         {/* Left side: link to Dashboard */}
         <a
           href="/freelancer/dashboard"
@@ -66,7 +68,7 @@ const Projects = () => {
         )}
       </header>
 
-      <h1 className="text-2xl font-bold mb-6">Available Projects</h1>
+      <h1 className="text-2xl font-bold mb-6 p-4">Available Projects</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {projects.map((project) => (

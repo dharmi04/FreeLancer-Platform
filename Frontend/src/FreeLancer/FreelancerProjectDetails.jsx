@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import FreeLancerNavBar from "./Components/FreeLancerNavBar";
 
 const FreelancerProjectDetails = () => {
   const { projectId } = useParams();
@@ -82,8 +83,9 @@ const FreelancerProjectDetails = () => {
   if (!project) return <p>Project not found.</p>;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <header className="flex justify-between items-center mb-4">
+    <div className="min-h-screen bg-gray-100">
+      <FreeLancerNavBar />
+      <header className="flex justify-between items-center mb-4 p-6">
         <h1 className="text-xl font-bold">Project Details</h1>
         <button
           onClick={() => navigate("/freelancer/projects")}
@@ -94,7 +96,7 @@ const FreelancerProjectDetails = () => {
       </header>
 
       {/* Project Info */}
-      <div className="bg-white p-4 rounded shadow mb-6">
+      <div className="bg-white rounded shadow mb-6 p-6">
         {/* If there's an image */}
         {project.imageUrl && (
           <img

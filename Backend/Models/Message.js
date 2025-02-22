@@ -1,11 +1,21 @@
+// Models/Message.js
 const mongoose = require("mongoose");
 
 const MessageSchema = new mongoose.Schema(
   {
-    sender: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    receiver: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    content: { type: String, required: true },
-    project: { type: mongoose.Schema.Types.ObjectId, ref: "Project" }, // Optional (for project-related chats)
+    roomId: {
+      type: String, // Could be project ID, or user1-user2 combined ID
+      required: true,
+    },
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    text: {
+      type: String,
+      required: true,
+    },
   },
   { timestamps: true }
 );

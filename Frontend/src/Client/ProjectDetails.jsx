@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import ClientNavBar from "./Components/ClientNavBar";
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
@@ -66,6 +67,7 @@ const ProjectDetails = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      <ClientNavBar />
       {/* Header */}
       <header className="bg-white shadow p-4 flex justify-between items-center">
         <h1 className="text-xl font-bold">Project Details</h1>
