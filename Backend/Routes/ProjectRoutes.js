@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 const Project = require("../Models/Project");
 const User = require("../Models/User");
 const protect = require("../middleware/authMiddleware");
@@ -63,8 +64,18 @@ router.post(
         return res.status(403).json({ message: "Only clients can create projects." });
       }
 
-      // Destructure fields from req.body
-      const { title, description, budget, deadline, questions, category } = req.body;
+      // Destructure fields from req.body (without `questions` here)
+      const { title, description, budget, deadline, category } = req.body;
+
+      // Parse the questions array from string to JSON
+      let questions = [];
+      if (req.body.questions) {
+        try {
+          questions = JSON.parse(req.body.questions);
+        } catch (error) {
+          return res.status(400).json({ message: "Invalid questions format. Must be a JSON array." });
+        }
+      }
 
       // Create project object
       const project = new Project({
@@ -74,22 +85,23 @@ router.post(
         deadline,
         category,
         client: req.user._id,
-        questions: questions || [],
+        questions, // Now this is a properly parsed array
       });
 
       // If a file was uploaded, store the path in `imageUrl`
       if (req.file) {
-        project.imageUrl = req.file.path; // e.g. "uploads/images/project-123.png"
+        project.imageUrl = req.file.path; // e.g., "uploads/images/project-123.png"
       }
 
       await project.save();
       res.status(201).json({ message: "Project created successfully", project });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Server error", error: err.message });
     }
   }
 );
+
 
 
 // 5. Update a project (Protected, only the client who owns it)
@@ -138,29 +150,19 @@ router.post("/:projectId/apply", protect, upload.single("resume"), async (req, r
 
     const { projectId } = req.params;
     const { answers } = req.body;
+
     const project = await Project.findById(projectId);
     if (!project) return res.status(404).json({ message: "Project not found" });
 
-    // Optionally ensure project.status === "open"
+    // Ensure project is open for applications
     if (project.status !== "open") {
       return res.status(400).json({ message: "Project is not open for applications." });
     }
 
     // Handle resume upload
-    let resumeUrl = null;
-    if (req.file) {
-      resumeUrl = req.file.path; // e.g. "uploads/resumes/resume-123456.pdf"
-    }
+    let resumeUrl = req.file ? req.file.path : null;
 
-    // Create the application subdoc
-    const application = {
-      freelancer: req.user._id,
-      answers: [],
-      resumeUrl,
-      status: "pending",  // <-- Important: default is "pending"
-    };
-
-    // If answers is a JSON string, parse it
+    // Ensure answers are correctly parsed
     let parsedAnswers = [];
     if (typeof answers === "string") {
       parsedAnswers = JSON.parse(answers);
@@ -168,12 +170,19 @@ router.post("/:projectId/apply", protect, upload.single("resume"), async (req, r
       parsedAnswers = answers;
     }
 
-    parsedAnswers.forEach((ans) => {
-      application.answers.push({
-        questionText: ans.questionText,
-        answerText: ans.answerText,
-      });
-    });
+    // ✅ Ensure `questionText` comes from project.questions
+    const applicationAnswers = project.questions.map((q, index) => ({
+      questionText: q.questionText, // Always take from project.questions
+      answerText: parsedAnswers[index]?.answerText || "", // Avoid undefined errors
+    }));
+
+    // Create application object
+    const application = {
+      freelancer: req.user._id,
+      answers: applicationAnswers, // ✅ Now correctly includes `questionText`
+      resumeUrl,
+      status: "pending",
+    };
 
     project.applications.push(application);
     await project.save();
@@ -184,6 +193,7 @@ router.post("/:projectId/apply", protect, upload.single("resume"), async (req, r
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
+
 
 
 // 8. Accept or Reject an application (Protected, client only)
@@ -281,6 +291,40 @@ router.get("/by-user/:userId", protect, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+
+
+// Get projects a freelancer has applied to
+// Get projects a freelancer has applied to
+router.get("/by-freelancer/:freelancerId", async (req, res) => {
+  try {
+      const { freelancerId } = req.params;
+
+      // Validate if freelancerId is a valid ObjectId
+      if (!mongoose.Types.ObjectId.isValid(freelancerId)) {
+          return res.status(400).json({ error: "Invalid Freelancer ID" });
+      }
+
+      const freelancerObjectId = new mongoose.Types.ObjectId(freelancerId);
+      console.log("Freelancer ID received:", freelancerId);
+      console.log("Converted ObjectId:", freelancerObjectId);
+
+      // Query projects where the freelancer has applied
+      const projects = await Project.find({ "applications.freelancer": freelancerObjectId });
+
+      if (projects.length === 0) {
+          return res.status(404).json({ error: "No projects found for this freelancer" });
+      }
+
+      console.log("Projects found:", projects);
+      res.json(projects);
+  } catch (error) {
+      console.error("Error fetching projects:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
 
 
 module.exports = router;

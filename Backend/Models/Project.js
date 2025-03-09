@@ -4,11 +4,11 @@ const applicationSchema = new mongoose.Schema({
   freelancer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   answers: [
     {
-      questionText: String,
-      answerText: String,
+      questionText: { type: String, required: true },
+      answerText: { type: String, required: true },
     },
   ],
-  resumeUrl: String,
+  resumeUrl: { type: String, default: "" },
   status: {
     type: String,
     enum: ["pending", "accepted", "rejected"],
@@ -30,14 +30,17 @@ const projectSchema = new mongoose.Schema(
       default: "open",
     },
     category: { type: String },
+
+    // Fixing `questions`
     questions: [
       {
         questionText: { type: String, required: true },
       },
     ],
+
     applications: [applicationSchema],
 
-    // ⭐ NEW: store image path
+    // Image field
     imageUrl: { type: String, default: "" },
   },
   { timestamps: true }

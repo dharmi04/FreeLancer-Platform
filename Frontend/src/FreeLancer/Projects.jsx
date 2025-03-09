@@ -1,12 +1,14 @@
-// Projects.js
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";  
-import API from "../api"; // or import axios if not using the interceptor
+import { useNavigate } from "react-router-dom";
+import API from "../api";
 import FreeLancerNavBar from "./Components/FreeLancerNavBar";
+import { FaSearch } from "react-icons/fa";
+import { IoFilterSharp } from "react-icons/io5";
+import { MdSort } from "react-icons/md";
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,85 +25,77 @@ const Projects = () => {
     }
   };
 
-  // Navigate to details page for a specific project
-  const handleViewDetails = (projectId) => {
-    navigate(`/freelancer/projects/${projectId}`);
-  };
+  // Filter projects based on search term
+  const filteredProjects = projects.filter((project) =>
+    project.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-[#ffffff]">
       <FreeLancerNavBar />
-      {/* Header */}
-      <header className="flex justify-between items-center mb-4 p-4">
-        {/* Left side: link to Dashboard */}
-        <a
-          href="/freelancer/dashboard"
-          className="text-blue-600 hover:text-blue-800 font-semibold"
-        >
-          Dashboard
-        </a>
 
-        {/* Right side: Profile Picture + Email Tooltip */}
-        {user ? (
-          user.profilePicture ? (
-            // If the user has a profile picture, show it with a hover tooltip for email
-            <div className="relative group cursor-pointer">
-              <img
-                src={`http://localhost:5000/${user.profilePicture}`}
-                alt="Profile"
-                className="w-10 h-10 rounded-full object-cover"
-              />
-              {/* Tooltip with email on hover */}
-              <div className="absolute right-0 top-12 hidden group-hover:block bg-white text-gray-700 text-sm px-3 py-2 rounded shadow">
-                {user.email}
-              </div>
-            </div>
-          ) : (
-            // If no profile picture, just show a text fallback with email
-            <div className="text-gray-700 font-semibold">
-              Logged in as: {user.email}
-            </div>
-          )
-        ) : (
-          // If no user in localStorage, prompt login
-          <div className="text-gray-700 font-semibold">Not logged in</div>
-        )}
-      </header>
+      {/* Search Bar & Filters */}
+      <div className="flex flex-col sm:flex-row items-center justify-between bg-[#F4E9CD] p-4 rounded-lg  shadow-md gap-4">
+        {/* Filter Button */}
+        <button className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition">
+          <IoFilterSharp className="text-[#031926]" />
+          <span className="text-[#031926] font-medium text-sm">Filter</span>
+        </button>
 
-      <h1 className="text-2xl font-bold mb-6 p-4">Available Projects</h1>
+        {/* Search Input */}
+        <div className="flex items-center bg-white px-4 py-2 rounded-lg shadow-sm w-[1500px] sm:max-w-lg">
+          <FaSearch className="text-gray-500" />
+          <input
+            type="text"
+            placeholder="Search the creative world at work"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="ml-2 w-full focus:outline-none text-sm"
+          />
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {projects.map((project) => (
-          <div key={project._id} className="bg-white rounded shadow p-4">
-            {/* Display Project Image */}
-            {project.imageUrl && (
-              <div className="mb-2">
+        {/* Sort Button */}
+        <button className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition">
+          <MdSort className="text-[#031926]" />
+          <span className="text-[#031926] font-medium text-sm">Sort</span>
+        </button>
+      </div>
+
+      {/* Page Title */}
+      {/* <h1 className="text-2xl sm:text-3xl font-bold text-[#031926] text-center mt-6 mb-6">
+        Explore Exciting Projects
+      </h1> */}
+
+      {/* Projects Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 sm:px-6 pb-12 mt-10">
+        {filteredProjects.length > 0 ? (
+          filteredProjects.map((project) => (
+            <div
+              key={project._id}
+              onClick={() => navigate(`/freelancer/projects/${project._id}`)}
+              className="cursor-pointer bg-white shadow-lg overflow-hidden transform transition duration-300 hover:scale-105"
+            >
+              {/* Project Image */}
+              {project.imageUrl && (
                 <img
                   src={`http://localhost:5000/${project.imageUrl}`}
                   alt="Project"
-                  className="w-full h-48 object-cover rounded"
+                  className="w-full h-52 object-cover"
                 />
+              )}
+
+              {/* Project Info */}
+              <div className="p-4">
+                <h2 className="text-lg font-semibold text-[#031926]">{project.title}</h2>
+                <p className="text-gray-500 text-sm">{project.description}</p>
               </div>
-            )}
-
-            <h2 className="text-xl font-bold mb-2">{project.title}</h2>
-            <p className="text-gray-700 mb-2">{project.description}</p>
-            <p className="text-gray-500">
-              Budget: <strong>${project.budget}</strong>
-            </p>
-            <p className="text-gray-500">
-              Deadline: {new Date(project.deadline).toLocaleDateString()}
-            </p>
-
-            {/* View Details Button */}
-            <button
-              onClick={() => handleViewDetails(project._id)}
-              className="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              View Details
-            </button>
-          </div>
-        ))}
+            </div>
+          ))
+        ) : (
+          <p className="text-center text-gray-500 col-span-full">
+            No projects found.
+          </p>
+        )}
       </div>
     </div>
   );

@@ -32,6 +32,9 @@ function App() {
 
         {/* Freelancer routes */}
         <Route path="/freelancer/projects/:projectId" element={<FreelancerProjectDetails />} />
+
+
+        {/* <Route path="/client/:clientId" element={<ClientProfile/>} /> */}
         </Routes>
       </Router>
     </>

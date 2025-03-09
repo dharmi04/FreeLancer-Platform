@@ -4,11 +4,7 @@ import axios from "axios";
 
 const FreeLancerDashboard = () => {
   const navigate = useNavigate();
-
-  const [applications, setApplications] = useState([]);
-  const [pending, setPending] = useState([]);
-  const [accepted, setAccepted] = useState([]);
-  const [rejected, setRejected] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -16,38 +12,32 @@ const FreeLancerDashboard = () => {
 
   useEffect(() => {
     if (!token || user?.role !== "freelancer") {
-      // if not logged in or not a freelancer, redirect
       navigate("/login");
     } else {
-      fetchMyApplications();
+      fetchFreelancerProjects();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchMyApplications = async () => {
+  const fetchFreelancerProjects = async () => {
+    if (!user?._id) {
+      console.error("User ID is missing. Cannot fetch projects.");
+      return;
+    }
+
     try {
-      const res = await axios.get("http://localhost:5000/api/projects/my-applications", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setApplications(res.data);
-      categorizeApps(res.data);
+      const res = await axios.get(
+        `http://localhost:5000/api/projects/by-freelancer/${user._id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setProjects(res.data);
     } catch (error) {
-      console.error("Failed to fetch applications:", error);
-      alert("Error fetching your applications.");
+      console.error("Failed to fetch projects:", error);
+      alert("Error fetching your projects.");
     } finally {
       setLoading(false);
     }
-  };
-
-  // Separate applications by status
-  const categorizeApps = (apps) => {
-    const pendingApps = apps.filter((item) => item.application.status === "pending");
-    const acceptedApps = apps.filter((item) => item.application.status === "accepted");
-    const rejectedApps = apps.filter((item) => item.application.status === "rejected");
-
-    setPending(pendingApps);
-    setAccepted(acceptedApps);
-    setRejected(rejectedApps);
   };
 
   const handleLogout = () => {
@@ -57,120 +47,68 @@ const FreeLancerDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      {/* Header */}
-      <header className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Freelancer Dashboard</h1>
-        <div>
-          <span className="mr-4">Hello, {user?.name}</span>
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-3 py-1 rounded"
-          >
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <aside className="w-64 bg-gray-900 text-white p-5 flex flex-col">
+        <h2 className="text-2xl font-bold mb-6 text-center">SkillSync</h2>
+        <nav className="flex flex-col gap-4">
+          <button onClick={() => navigate("/freelancer/projects")} className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded">
+            Explore Projects
+          </button>
+          <button onClick={() => navigate("/my-jobs")} className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded">
+            Jobs
+          </button>
+        </nav>
+        <div className="mt-auto">
+          <button onClick={handleLogout} className="w-full bg-red-600 hover:bg-red-500 py-2 mt-6 rounded">
             Logout
           </button>
         </div>
-      </header>
+      </aside>
 
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <>
-          {/* Pending Section */}
-          <section className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Pending Applications</h2>
-            {pending.length === 0 ? (
-              <p>No pending applications.</p>
-            ) : (
-              <div className="space-y-4">
-                {pending.map((item) => (
-                  <div key={item.application._id} className="bg-white p-4 rounded shadow">
-                    <h3 className="text-lg font-bold mb-1">{item.project.title}</h3>
-                    <p className="text-sm text-gray-600 mb-1">
-                      Budget: ${item.project.budget} | Deadline:{" "}
-                      {new Date(item.project.deadline).toLocaleDateString()}
-                    </p>
-                    {/* If there's an image */}
-                    {item.project.imageUrl && (
-                      <img
-                        src={`http://localhost:5000/${item.project.imageUrl}`}
-                        alt="Project"
-                        className="w-full h-48 object-cover rounded mb-2"
-                      />
-                    )}
-                    <p className="text-gray-700">{item.project.description}</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Status: {item.application.status}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+      {/* Main Content */}
+      <main className="flex-1 bg-gray-100 p-6">
+        <header className="mb-6 flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Freelancer Dashboard</h1>
+          <span className="text-gray-700">Hello, {user?.name}</span>
+        </header>
 
-          {/* Accepted / Ongoing Section */}
-          <section className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Accepted / Ongoing</h2>
-            {accepted.length === 0 ? (
-              <p>No accepted projects yet.</p>
-            ) : (
-              <div className="space-y-4">
-                {accepted.map((item) => (
-                  <div key={item.application._id} className="bg-white p-4 rounded shadow">
-                    <h3 className="text-lg font-bold mb-1">{item.project.title}</h3>
-                    <p className="text-sm text-gray-600 mb-1">
-                      Budget: ${item.project.budget} | Deadline:{" "}
-                      {new Date(item.project.deadline).toLocaleDateString()}
-                    </p>
-                    {item.project.imageUrl && (
-                      <img
-                        src={`http://localhost:5000/${item.project.imageUrl}`}
-                        alt="Project"
-                        className="w-full h-48 object-cover rounded mb-2"
-                      />
-                    )}
-                    <p className="text-gray-700">{item.project.description}</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Status: {item.application.status}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Rejected Section */}
-          <section>
-            <h2 className="text-xl font-semibold mb-2">Rejected</h2>
-            {rejected.length === 0 ? (
-              <p>No rejected applications.</p>
-            ) : (
-              <div className="space-y-4">
-                {rejected.map((item) => (
-                  <div key={item.application._id} className="bg-white p-4 rounded shadow">
-                    <h3 className="text-lg font-bold mb-1">{item.project.title}</h3>
-                    <p className="text-sm text-gray-600 mb-1">
-                      Budget: ${item.project.budget} | Deadline:{" "}
-                      {new Date(item.project.deadline).toLocaleDateString()}
-                    </p>
-                    {item.project.imageUrl && (
-                      <img
-                        src={`http://localhost:5000/${item.project.imageUrl}`}
-                        alt="Project"
-                        className="w-full h-48 object-cover rounded mb-2"
-                      />
-                    )}
-                    <p className="text-gray-700">{item.project.description}</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Status: {item.application.status}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </>
-      )}
+        {loading ? (
+          <p>Loading...</p>
+        ) : (
+          <>
+            {/* Freelancer Applied Projects */}
+            <section>
+              <h2 className="text-xl font-semibold mb-2">Projects You've Applied For</h2>
+              {projects.length === 0 ? (
+                <p>No applied projects.</p>
+              ) : (
+                <div className="space-y-4">
+                  {projects.map((project) => (
+                    <div key={project._id} className="bg-white p-4 rounded shadow flex justify-between items-center">
+                      {/* Left Side - Project Info */}
+                      <div>
+                        <h3 className="text-lg font-bold">{project.title}</h3>
+                        <p className="text-gray-600">Budget: ${project.budget}</p>
+                        <p className="text-gray-500">
+                          Client: {project.client.name} ({project.client.email})
+                        </p>
+                      </div>
+                      
+                      {/* Right Side - Status */}
+                      <div>
+                        <span className={`px-3 py-1 rounded text-white ${project.status === "In Progress" ? "bg-green-500" : "bg-red-500"}`}>
+                          {project.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        )}
+      </main>
     </div>
   );
 };
