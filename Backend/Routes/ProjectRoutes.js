@@ -325,6 +325,26 @@ router.get("/by-freelancer/:freelancerId", async (req, res) => {
 });
 
 
+router.put("/:projectId/update-progress", async (req, res) => {
+  const { progress } = req.body;
+  const projectId = req.params.projectId; // ✅ Correcting the parameter key
+  console.log("Received projectId:", projectId);
+
+  try {
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    project.progress = progress; // Update progress field
+    await project.save();
+
+    res.json({ message: "Progress updated successfully", project });
+  } catch (error) {
+    console.error("Error updating progress:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
 
 
 module.exports = router;
