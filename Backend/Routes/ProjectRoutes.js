@@ -344,7 +344,48 @@ router.put("/:projectId/update-progress", async (req, res) => {
   }
 });
 
+router.post("/:projectId/discussions", async (req, res) => {
+  const { sender, text } = req.body; // Use `text` instead of `message`
+  const projectId = req.params.projectId;
 
+  if (!text || !sender) {
+    return res.status(400).json({ message: "Sender and text are required" });
+  }
+
+  try {
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    const newMessage = {
+      sender,
+      text, // Ensure you're storing `text`, not `message`
+      timestamp: new Date(),
+    };
+
+    project.messages.push(newMessage);
+    await project.save();
+
+    // Emit new message event to clients
+    io.to(projectId).emit("messageReceived", newMessage);
+
+    res.json({ message: "Message added successfully", newMessage });
+  } catch (error) {
+    console.error("Error adding message:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/:projectId/discussions", async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId).populate("messages.sender", "name"); // Populate sender details
+    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    res.json({ discussions: project.messages });
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 
 module.exports = router;

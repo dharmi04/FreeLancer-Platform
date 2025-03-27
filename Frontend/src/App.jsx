@@ -11,6 +11,7 @@ import AddProject from "./Client/AddProject"
 import FreelancerProjectDetails from "./FreeLancer/FreelancerProjectDetails"
 import FreeLancerprofile from "./FreeLancer/FreeLancerprofile"
 import FreelancerProfileSetup from "./FreeLancer/FreeLancerProfileSetup"
+import DiscussionThread from "./Components/DiscussionThread"
 function App() {
 
   return (
@@ -33,7 +34,7 @@ function App() {
         {/* Freelancer routes */}
         <Route path="/freelancer/projects/:projectId" element={<FreelancerProjectDetails />} />
 
-
+        <Route path="/discussion/:projectId" element={<DiscussionThread />} />
         {/* <Route path="/client/:clientId" element={<ClientProfile/>} /> */}
         </Routes>
       </Router>

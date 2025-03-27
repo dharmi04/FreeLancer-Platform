@@ -2,14 +2,25 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-// const http = require("http");
-// const { Server } = require("socket.io"); // <-- Important: import { Server }
+const http = require("http");
+const { Server } = require("socket.io");
+
 const userRoutes = require("./Routes/UserRoutes");
 const projectRoutes = require("./Routes/ProjectRoutes");
-//const clientRoutes = require('./Routes/ClientRoutes')
+const Project = require('./Models/Project');
 
 // Initialize Express
 const app = express();
+const server = http.createServer(app); // Wrap Express in HTTP server
+
+// Configure Socket.io
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173", // Ensure this matches your frontend URL
+    methods: ["GET", "POST"],
+  },
+});
+
 app.use("/uploads", express.static("uploads")); // Serve static files from /uploads
 app.use(express.json());
 app.use(cors());
@@ -24,54 +35,57 @@ mongoose
   .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.error("❌ MongoDB Connection Error:", err));
 
-// Create HTTP server
-// const server = http.createServer(app);
+// Socket.io connection
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
 
-// // Create Socket.io server (only once!)
-// const io = new Server(server, {
-//   cors: {
-//     origin: "*", // or specify your frontend URL
-//     methods: ["GET", "POST", "PUT", "DELETE"],
-//   },
-// });
+  // Join a room for a specific project
+  socket.on("joinProject", (projectId) => {
+    socket.join(projectId);
+    console.log(`User joined project room: ${projectId}`);
+  });
 
-// // Optionally store io in app, so routes can broadcast events
-// app.set("io", io);
+  // Listen for new messages
+  socket.on("newMessage", async ({ projectId, sender, message }) => {
+    try {
+      const project = await Project.findById(projectId);
+      if (!project) {
+        console.error("Project not found");
+        return;
+      }
 
-// // Socket.io logic
-// io.on("connection", (socket) => {
-//   console.log("🟢 A user connected:", socket.id);
+      // Ensure `discussionThreads` exists before pushing messages
+      if (!project.discussionThreads) {
+        project.discussionThreads = []; // Initialize array if it's undefined
+      }
 
-//   // Example: user joins a chat room
-//   socket.on("joinRoom", (roomId) => {
-//     socket.join(roomId);
-//     console.log(`Socket ${socket.id} joined room ${roomId}`);
-//   });
+      const newMessage = {
+        sender,
+        message,
+        timestamp: new Date(),
+      };
 
-//   // Example: receiving a chat message
-//   socket.on("chatMessage", (data) => {
-//     // data might be { roomId, text, senderId }
-//     // Broadcast to everyone in that room
-//     io.to(data.roomId).emit("chatMessage", data);
-//   });
+      project.discussionThreads.push(newMessage);
+      await project.save();
 
-  // Example: user joins a notifications room
-//   socket.on("joinNotifications", (userId) => {
-//     socket.join(`notify_${userId}`);
-//     console.log(`User ${userId} joined notifications room`);
-//   });
+      // Send the new message to all users in the project room
+      io.to(projectId).emit("messageReceived", newMessage);
+    } catch (error) {
+      console.error("Error adding message:", error);
+    }
+  });
 
-//   socket.on("disconnect", () => {
-//     console.log("🔴 User disconnected:", socket.id);
-//   });
-// });
+  socket.on("disconnect", () => {
+    console.log("A user disconnected");
+  });
+});
 
-// Register your routes
+
+// Register routes
 app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
-// app.use("/api/clients", clientRoutes); // Register client API route
 
-// Start Server
-app.listen(PORT, () => {
+// Start Server using `server.listen` instead of `app.listen`
+server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

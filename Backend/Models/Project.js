@@ -1,20 +1,33 @@
 const mongoose = require("mongoose");
 
-const applicationSchema = new mongoose.Schema({
-  freelancer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  answers: [
-    {
-      questionText: { type: String, required: true },
-      answerText: { type: String, required: true },
+const applicationSchema = new mongoose.Schema(
+  {
+    freelancer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    answers: [
+      {
+        questionText: { type: String, required: true },
+        answerText: { type: String, required: true },
+      },
+    ],
+    resumeUrl: { type: String, default: "" },
+    status: {
+      type: String,
+      enum: ["pending", "accepted", "rejected"],
+      default: "pending",
     },
-  ],
-  resumeUrl: { type: String, default: "" },
-  status: {
-    type: String,
-    enum: ["pending", "accepted", "rejected"],
-    default: "pending",
   },
-});
+  { _id: false } // Prevents automatic generation of _id for array elements
+);
+
+// Message Schema for Chat Feature
+const messageSchema = new mongoose.Schema(
+  {
+    sender: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    text: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
 
 const projectSchema = new mongoose.Schema(
   {
@@ -31,14 +44,22 @@ const projectSchema = new mongoose.Schema(
     },
     category: { type: String },
 
-    // Fixing `questions`
-    questions: [
-      {
-        questionText: { type: String, required: true },
-      },
-    ],
+    // Questions Array
+    questions: [{
+      questionText: String, // Ensure it's an object
+      type: String, // Optional: Add other properties if needed
+    }],
 
-    applications: [applicationSchema],
+    applications: {
+      type: [applicationSchema], // Explicitly define it as an array of the schema
+      default: [], // Ensure it defaults to an empty array
+    },
+
+    // Messages for communication between client and freelancer
+    messages: {
+      type: [messageSchema], // Array of message objects
+      default: [], // Initialize as an empty array
+    },
 
     // Image field
     imageUrl: { type: String, default: "" },

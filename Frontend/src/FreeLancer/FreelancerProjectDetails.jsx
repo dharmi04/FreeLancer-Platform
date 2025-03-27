@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { FileText, Calendar, DollarSign, Tag, CheckCircle } from "lucide-react";
 import FreeLancerNavBar from "./Components/FreeLancerNavBar";
 
 const FreelancerProjectDetails = () => {
@@ -28,8 +29,9 @@ const FreelancerProjectDetails = () => {
       const res = await axios.get(`http://localhost:5000/api/projects/${projectId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       setProject(res.data);
-      // Initialize answers array based on the number of questions
+
       if (res.data.questions) {
         setAnswers(new Array(res.data.questions.length).fill(""));
       }
@@ -53,12 +55,12 @@ const FreelancerProjectDetails = () => {
       if (resume) formData.append("resume", resume);
       
       const formattedAnswers = project.questions.map((q, index) => ({
-        questionText: q.questionText, 
-        answerText: answers[index]?.answerText || "",
+        questionText: q, 
+        answerText: answers[index] || "",
       }));
-  
+
       formData.append("answers", JSON.stringify(formattedAnswers));
-  
+
       await axios.post(
         `http://localhost:5000/api/projects/${projectId}/apply`,
         formData,
@@ -70,91 +72,154 @@ const FreelancerProjectDetails = () => {
         }
       );
       alert("Applied successfully!");
-      // ✅ Redirect to freelancer dashboard
       navigate("/freelancer/dashboard");
     } catch (error) {
       console.error("Failed to apply:", error);
       alert(error.response?.data?.message || "Something went wrong");
     }
   };
-  
-  
 
-  if (loading) return <p>Loading...</p>;
-  if (!project) return <p>Project not found.</p>;
+  if (loading) return (
+    <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+  );
+
+  if (!project) return <p className="text-center text-red-500 mt-10">Project not found.</p>;
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <FreeLancerNavBar />
-      <header className="flex justify-between items-center mb-4 p-6">
-        <h1 className="text-xl font-bold">Project Details</h1>
-        <button
-          onClick={() => navigate("/freelancer/projects")}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Back
-        </button>
-      </header>
+      
+      <div className="container mx-auto px-4 py-8">
+        {/* Header Section */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 flex items-center">
+            <Tag className="mr-3 text-blue-600" />
+            Project Details
+          </h1>
+          <button
+            onClick={() => navigate("/freelancer/projects")}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition transform hover:-translate-y-1 hover:scale-105"
+          >
+            Back to Projects
+          </button>
+        </div>
 
-      <div className="bg-white rounded shadow mb-6 p-6">
-        {project.imageUrl && (
-          <img
-            src={`http://localhost:5000/${project.imageUrl}`}
-            alt="Project"
-            className="w-full h-48 object-cover rounded mb-4"
-          />
-        )}
-        <h2 className="text-2xl font-bold mb-2">{project.title}</h2>
-        <p className="text-gray-700 mb-1">{project.description}</p>
-        <p className="text-gray-500 mb-1">Budget: ${project.budget}</p>
-        <p className="text-gray-500 mb-1">
-          Deadline: {new Date(project.deadline).toLocaleDateString()}
-        </p>
-        <p className="text-gray-500">Status: {project.status}</p>
-      </div>
-
-      {project.status === "open" && (
-        <form onSubmit={handleApply} className="bg-white p-4 rounded shadow">
-          <h3 className="text-xl font-bold mb-2">Apply to this Project</h3>
-
-          {/* Render Questions */}
-          {project.questions && project.questions.map((q, index) => (
-  <div key={index} className="mb-2">
-    <label className="block mb-1">{q.questionText}</label>
-    <input
-      type="text"
-      className="border p-2 w-full"
-      onChange={(e) => {
-        const newAnswers = [...answers];
-        newAnswers[index] = { questionId: q._id, answerText: e.target.value };
-        setAnswers(newAnswers);
-      }}
-    />
-  </div>
-))}
-
-
-          {/* Resume Upload */}
-          <div className="mb-2">
-            <label className="block mb-1 font-semibold">Upload Resume (PDF)</label>
-            <input
-              type="file"
-              accept="application/pdf"
-              onChange={(e) => setResume(e.target.files[0])}
-              className="border p-2 w-full"
-            />
+        {/* Project Overview */}
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Project Image and Details */}
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            {project.imageUrl && (
+              <img
+                src={`http://localhost:5000/${project.imageUrl}`}
+                alt="Project"
+                className="w-full h-64 object-cover transition-transform duration-300 hover:scale-105"
+              />
+            )}
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">{project.title}</h2>
+              <p className="text-gray-600 mb-4">{project.description}</p>
+              
+              <div className="space-y-3">
+                <div className="flex items-center text-gray-700">
+                  <DollarSign className="mr-3 text-green-600" />
+                  <span className="font-semibold">Budget:</span>
+                  <span className="ml-2">${project.budget}</span>
+                </div>
+                <div className="flex items-center text-gray-700">
+                  <Calendar className="mr-3 text-blue-600" />
+                  <span className="font-semibold">Deadline:</span>
+                  <span className="ml-2">
+                    {new Date(project.deadline).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="flex items-center text-gray-700">
+                  <CheckCircle className="mr-3 text-green-500" />
+                  <span className="font-semibold">Status:</span>
+                  <span className={`ml-2 px-3 py-1 rounded-full text-sm ${
+                    project.status === 'open' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {project.status}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <button
-            type="submit"
-            className="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            Submit Application
-          </button>
-        </form>
-      )}
+          {/* Application Section */}
+          {project.status === "open" && (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <form onSubmit={handleApply}>
+                <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                  <FileText className="mr-3 text-blue-600" />
+                  Apply to this Project
+                </h3>
 
-      {project.status !== "open" && <p className="text-gray-700">This project is no longer open for applications.</p>}
+                {/* Questions Section */}
+                {project.questions && project.questions.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold text-gray-700 mb-4">
+                      Answer the following questions:
+                    </h4>
+                    {project.questions.map((question, index) => (
+                      <div key={index} className="mb-4">
+                        <label className="block text-gray-700 font-medium mb-2">
+                          {question}
+                        </label>
+                        <textarea
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+                          rows="3"
+                          value={answers[index]}
+                          onChange={(e) => handleAnswerChange(index, e.target.value)}
+                          required
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Resume Upload */}
+                <div className="mb-6">
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Upload Resume (PDF)
+                  </label>
+                  <div className="border-2 border-dashed border-gray-300 p-4 text-center rounded-lg hover:border-blue-500 transition">
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => setResume(e.target.files[0])}
+                      className="w-full file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    {resume && (
+                      <p className="text-sm text-green-600 mt-2">
+                        {resume.name} selected
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition transform hover:scale-105 shadow-md"
+                >
+                  Submit Application
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+
+        {project.status !== "open" && (
+          <div className="text-center mt-8 bg-yellow-100 p-4 rounded-lg">
+            <p className="text-yellow-800">
+              This project is no longer open for applications.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
