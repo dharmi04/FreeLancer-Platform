@@ -88,7 +88,7 @@ const Home = () => {
       {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-white shadow-md">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-blue-600">FreelanceHub</div>
+          <div className="text-2xl font-bold text-blue-600">SkillSync</div>
           <div className="flex space-x-6 items-center">
             <Link to="/find-projects" className="hover:text-blue-600 transition">Find Projects</Link>
             <Link to="/find-freelancers" className="hover:text-blue-600 transition">Find Freelancers</Link>
@@ -142,7 +142,7 @@ const Home = () => {
       {/* About Us Section */}
       <section className="container mx-auto px-4 py-20">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">About FreelanceHub</h2>
+          <h2 className="text-4xl font-bold mb-4">About SkillSync</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             We're transforming the way freelancers and clients connect, making professional collaboration seamless and efficient.
           </p>
@@ -171,7 +171,7 @@ const Home = () => {
       <section className="bg-gray-100 py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Why Choose FreelanceHub?</h2>
+            <h2 className="text-4xl font-bold mb-4">Why Choose SkillSync?</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               We provide unique features that set us apart from other freelancing platforms.
             </p>
@@ -202,7 +202,7 @@ const Home = () => {
       <footer className="bg-gray-900 text-white py-16">
         <div className="container mx-auto px-4 grid md:grid-cols-4 gap-8">
           <div>
-            <h4 className="text-2xl font-bold mb-4">FreelanceHub</h4>
+            <h4 className="text-2xl font-bold mb-4">SkillSync</h4>
             <p className="text-gray-400">Connecting talents with opportunities worldwide.</p>
           </div>
           <div>
@@ -231,7 +231,7 @@ const Home = () => {
           </div>
         </div>
         <div className="text-center mt-8 text-gray-500">
-          © 2024 FreelanceHub. All Rights Reserved.
+          © 2024 SkillSync. All Rights Reserved.
         </div>
       </footer>
     </div>

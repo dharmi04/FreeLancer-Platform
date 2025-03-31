@@ -8,6 +8,7 @@ const { Server } = require("socket.io");
 const userRoutes = require("./Routes/UserRoutes");
 const projectRoutes = require("./Routes/ProjectRoutes");
 const Project = require('./Models/Project');
+const tweetRoutes = require("./Routes/TweetRoutes")
 
 // Initialize Express
 const app = express();
@@ -84,6 +85,7 @@ io.on("connection", (socket) => {
 // Register routes
 app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/tweets", tweetRoutes)
 
 // Start Server using `server.listen` instead of `app.listen`
 server.listen(PORT, () => {

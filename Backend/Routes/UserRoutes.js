@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../Models/User");
 const protect = require("../middleware/authMiddleware");
+const auth = require("../middleware/auth")
 
 // ✅ Import the upload middleware
 const upload = require("../middleware/ImageMiddleware"); 
@@ -100,6 +101,125 @@ router.get("/", protect, async (req, res) => {
       res.status(500).json({ message: "Server error" });
     }
   });
+
+
+  router.get('/profile/:id', async (req, res) => {
+    try {
+      // Get user without password field
+      const user = await User.findById(req.params.id).select('-password -email');
+      
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
   
+      res.json(user);
+    } catch (err) {
+      console.error('Error fetching profile:', err.message);
+      res.status(500).send('Server Error');
+    }
+  });
+  
+
+  router.post("/follow/:id", auth, async (req, res) => {
+    try {
+      // Can't follow yourself
+      if (req.user.id === req.params.id) {
+        return res.status(400).json({ message: "You cannot follow yourself" });
+      }
+  
+      const userToFollow = await User.findById(req.params.id);
+      const currentUser = await User.findById(req.user.id);
+  
+      if (!userToFollow || !currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
+      // Check if already following
+      if (currentUser.following.includes(req.params.id)) {
+        return res.status(400).json({ message: "Already following this user" });
+      }
+  
+      // Add to following
+      currentUser.following.push(req.params.id);
+      await currentUser.save();
+  
+      // Add to followers
+      userToFollow.followers.push(req.user.id);
+      await userToFollow.save();
+  
+      res.json({ message: "User followed successfully" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server Error" });
+    }
+  });
+  
+  // Unfollow a user
+  router.post("/unfollow/:id", auth, async (req, res) => {
+    try {
+      const userToUnfollow = await User.findById(req.params.id);
+      const currentUser = await User.findById(req.user.id);
+  
+      if (!userToUnfollow || !currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
+      // Check if not following
+      if (!currentUser.following.includes(req.params.id)) {
+        return res.status(400).json({ message: "You are not following this user" });
+      }
+  
+      // Remove from following
+      currentUser.following = currentUser.following.filter(
+        (id) => id.toString() !== req.params.id
+      );
+      await currentUser.save();
+  
+      // Remove from followers
+      userToUnfollow.followers = userToUnfollow.followers.filter(
+        (id) => id.toString() !== req.user.id
+      );
+      await userToUnfollow.save();
+  
+      res.json({ message: "User unfollowed successfully" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server Error" });
+    }
+  });
+  
+  // Get user's following
+  router.get("/:id/following", async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id)
+        .populate("following", "name profilePicture bio");
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(user.following);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server Error" });
+    }
+  });
+  
+  // Get user's followers
+  router.get("/:id/followers", async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id)
+        .populate("followers", "name profilePicture bio");
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(user.followers);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server Error" });
+    }
+  });
 
 module.exports = router;

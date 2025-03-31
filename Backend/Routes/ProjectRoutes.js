@@ -172,10 +172,10 @@ router.post("/:projectId/apply", protect, upload.single("resume"), async (req, r
 
     // ✅ Ensure `questionText` comes from project.questions
     const applicationAnswers = project.questions.map((q, index) => ({
-      questionText: q.questionText, // Always take from project.questions
-      answerText: parsedAnswers[index]?.answerText || "", // Avoid undefined errors
+      questionText: typeof q === "string" ? q : q.questionText, // Handle string-based and object-based questions
+      answerText: parsedAnswers[index]?.answerText || "",
     }));
-
+    
     // Create application object
     const application = {
       freelancer: req.user._id,
@@ -295,7 +295,6 @@ router.get("/by-user/:userId", protect, async (req, res) => {
 
 
 // Get projects a freelancer has applied to
-// Get projects a freelancer has applied to
 router.get("/by-freelancer/:freelancerId", async (req, res) => {
   try {
       const { freelancerId } = req.params;
@@ -325,6 +324,120 @@ router.get("/by-freelancer/:freelancerId", async (req, res) => {
 });
 
 
+
+
+router.get("/updates", protect, async (req, res) => {
+  try {
+    const clientId = req.user?.id;
+    if (!clientId) {
+      return res.status(400).json({ message: "Client ID not found" });
+    }
+
+    console.log("Fetching projects for client:", clientId);
+
+    // Fetch projects related to this client
+    const projects = await Project.find({ clientId }).populate("updates");
+
+    if (!projects.length) {
+      return res.status(404).json({ message: "No projects found for this client" });
+    }
+
+    console.log("Projects found:", projects);
+
+    // Extract updates safely
+    const allUpdates = projects.flatMap((project) =>
+      (project.updates || []).map((update) => ({
+        projectId: project._id,
+        projectTitle: project.title,
+        freelancerName: update.freelancerName || "Unknown",
+        progress: update.progress || "No progress data",
+        note: update.note || "No notes",
+        timestamp: update.timestamp || new Date(),
+      }))
+    );
+
+    // Sort updates by timestamp (most recent first)
+    const sortedUpdates = allUpdates.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    res.json({ updates: sortedUpdates });
+  } catch (error) {
+    console.error("Error fetching project updates:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
+
+// // Get project updates
+// router.get("/:projectId/updates", protect, async (req, res) => {
+//   try {
+//     const { projectId } = req.params;
+//     const project = await Project.findById(projectId).populate("updates.freelancer", "name email");
+
+//     if (!project) return res.status(404).json({ message: "Project not found" });
+
+//     return res.status(200).json({ updates: project.updates });
+//   } catch (error) {
+//     return res.status(500).json({ message: "Server error", error });
+//   }
+// });
+
+// In your projects router file
+// router.get("/:projectId/updates", protect, async (req, res) => {
+//   try {
+//     // Ensure only clients can access their project updates
+//     if (req.user.role !== 'client') {
+//       return res.status(403).json({ message: "Access denied. Client role required." });
+//     }
+
+//     // Find all projects associated with this client
+//     const projects = await Project.find({ client: req.user.id })
+//       .populate({
+//         path: 'updates.freelancer',
+//         select: 'name email' // Select only necessary freelancer details
+//       })
+//       .populate('freelancer', 'name email') // Populate freelancer details for each project
+//       .select('title status budget updates freelancer');
+
+//     // Transform the data to create a comprehensive updates list
+//     const projectUpdates = projects.map(project => ({
+//       projectId: project._id,
+//       projectTitle: project.title,
+//       projectStatus: project.status,
+//       projectBudget: project.budget,
+//       freelancerName: project.freelancer?.name || 'Unassigned',
+//       updates: project.updates.map(update => ({
+//         progress: update.progress,
+//         note: update.note,
+//         timestamp: update.timestamp,
+//         freelancerName: update.freelancer?.name || 'Unknown'
+//       })).sort((a, b) => b.timestamp - a.timestamp) // Sort updates from newest to oldest
+//     }));
+
+//     return res.status(200).json({
+//       message: "Project updates retrieved successfully",
+//       updates: projectUpdates
+//     });
+//   } catch (error) {
+//     console.error("Error retrieving project updates:", error);
+//     return res.status(500).json({ 
+//       message: "Server error", 
+//       error: error.message 
+//     });
+//   }
+// });
+
+
+
+
+
+
+
+
+
+
+
+
+
 router.put("/:projectId/update-progress", async (req, res) => {
   const { progress } = req.body;
   const projectId = req.params.projectId; // ✅ Correcting the parameter key
@@ -345,7 +458,7 @@ router.put("/:projectId/update-progress", async (req, res) => {
 });
 
 router.post("/:projectId/discussions", async (req, res) => {
-  const { sender, text } = req.body; // Use `text` instead of `message`
+  const { sender, text } = req.body; 
   const projectId = req.params.projectId;
 
   if (!text || !sender) {
@@ -386,6 +499,83 @@ router.get("/:projectId/discussions", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+
+//add update
+router.post("/:projectId/update", protect , async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { progress, note } = req.body;
+    const userId = req.user.id; // Authenticated freelancer
+
+    const project = await Project.findById(projectId);
+
+    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    // Ensure only assigned freelancers can update progress
+    if (project.freelancer.toString() !== userId)
+      return res.status(403).json({ message: "Not authorized to update progress" });
+
+    // Add update entry
+    const updateEntry = {
+      progress,
+      note,
+      timestamp: new Date(),
+      freelancer: userId,
+    };
+
+    project.updates.push(updateEntry);
+    await project.save();
+
+    return res.status(200).json({ message: "Progress updated", project });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error });
+  }
+});
+
+
+
+router.get("/projects/updates", protect, async (req, res) => {
+  try {
+    const clientId = req.user.id; // Assuming clientId comes from the authenticated user
+    if (!clientId) {
+      return res.status(400).json({ message: "Client ID is required" });
+    }
+
+    // Fetch all projects related to this client
+    const projects = await Project.find({ clientId }).select("_id");
+    const projectIds = projects.map((project) => project._id);
+
+    // Fetch all updates related to these projects
+    const updates = await Update.find({ projectId: { $in: projectIds } })
+      .populate("projectId", "name") // Populate project name
+      .sort({ createdAt: -1 }); // Sort updates by latest first
+
+    res.status(200).json({ updates });
+  } catch (error) {
+    console.error("Error fetching project updates:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+
+
+
+router.get("/project-updates", async (req, res) => {
+    try {
+        const updates = [
+            { id: 1, title: "Project Started", date: "2025-03-31" },
+            { id: 2, title: "Design Phase Completed", date: "2025-04-01" }
+        ];
+
+        res.status(200).json({ updates });
+    } catch (error) {
+        console.error("Error fetching project updates:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
 
 
 module.exports = router;

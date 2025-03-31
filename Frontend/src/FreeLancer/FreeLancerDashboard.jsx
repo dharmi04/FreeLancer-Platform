@@ -179,8 +179,6 @@
 // };
 
 // export default FreeLancerDashboard;
-
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -192,17 +190,97 @@ import {
   AlertCircle, 
   Clock, 
   Search, 
-  User 
+  User,
+  Edit 
 } from 'lucide-react';
+
+const ProgressUpdateModal = ({ isOpen, onClose, projectId, onSubmit }) => {
+  const [progress, setProgress] = useState('');
+  const [note, setNote] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `http://localhost:5000/api/projects/${projectId}/update`, 
+        { progress, note },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      onSubmit(response.data.project);
+      onClose();
+    } catch (error) {
+      console.error("Failed to update progress:", error);
+      alert("Error updating project progress");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-8 rounded-lg shadow-xl w-96">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">Update Project Progress</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Progress</label>
+            <select 
+              value={progress}
+              onChange={(e) => setProgress(e.target.value)}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="">Select Progress</option>
+              <option value="25">25% Complete</option>
+              <option value="50">50% Complete</option>
+              <option value="75">75% Complete</option>
+              <option value="100">100% Complete</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Update Note</label>
+            <textarea 
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows="4"
+              placeholder="Provide a brief update about the project..."
+            />
+          </div>
+          <div className="flex justify-end space-x-2">
+            <button 
+              type="button"
+              onClick={onClose}
+              className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300"
+            >
+              Submit Update
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const FreeLancerDashboard = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user"));
   const token = localStorage.getItem("token");
+
 
   useEffect(() => {
     if (!token || user?.role !== "freelancer") {
@@ -244,6 +322,23 @@ const FreeLancerDashboard = () => {
     }
   };
 
+  const handleOpenUpdateModal = (project) => {
+    setSelectedProject(project);
+    setIsUpdateModalOpen(true);
+  };
+
+  const handleCloseUpdateModal = () => {
+    setSelectedProject(null);
+    setIsUpdateModalOpen(false);
+  };
+
+  const handleUpdateProject = (updatedProject) => {
+    const updatedProjects = projects.map(project => 
+      project._id === updatedProject._id ? updatedProject : project
+    );
+    setProjects(updatedProjects);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -265,7 +360,7 @@ const FreeLancerDashboard = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
+      {/* Existing Sidebar and other code remains the same */}
       <aside className="w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white p-6 flex flex-col shadow-xl">
         <div className="flex items-center justify-center mb-8">
           <Briefcase className="mr-2 text-blue-400" size={32} />
@@ -287,6 +382,13 @@ const FreeLancerDashboard = () => {
             <Briefcase className="mr-3" size={20} />
             My Jobs
           </button>
+          <button
+            onClick={() => navigate("/freelancer/my-profile")}
+            className="w-full flex items-center px-4 py-3 bg-gray-800 hover:bg-blue-600 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
+          >
+            <Briefcase className="mr-3" size={20} />
+            Profile Setup
+          </button>
         </nav>
         
         <button
@@ -297,9 +399,10 @@ const FreeLancerDashboard = () => {
           Logout
         </button>
       </aside>
-
-      {/* Main Content */}
+      
+      {/* Main Content Section */}
       <main className="flex-1 p-8">
+        {/* Previous header code remains the same */}
         <header className="mb-8 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-800 flex items-center">
@@ -307,6 +410,7 @@ const FreeLancerDashboard = () => {
               Freelancer Dashboard
             </h1>
             <p className="text-gray-600 mt-2">Welcome back, {user?.name}</p>
+
           </div>
           
           {/* Search Bar */}
@@ -354,14 +458,14 @@ const FreeLancerDashboard = () => {
                             <Clock className="mr-2 text-blue-500" size={16} />
                             Budget: ${project.budget}
                           </p>
-                          <p className="flex items-center">
-                            <User className="mr-2 text-green-500" size={16} />
-                            Client: {project.client.name}
-                          </p>
-                          <p className="flex items-center">
+                          {/* <p className="flex items-center">
+                            <User className="mr-2 text-black" size={16} />
+                            Client: {project?.client?.name || 'Unknown'}
+                          </p> */}
+                          {/* <p className="flex items-center">
                             <CheckCircle className="mr-2 text-purple-500" size={16} />
                             Progress: {project.progress || "Not Updated"}
-                          </p>
+                          </p> */}
                         </div>
                       </div>
                       
@@ -373,12 +477,21 @@ const FreeLancerDashboard = () => {
                         </span>
                         
                         {project.status.toLowerCase() === "in progress" && (
-                          <button
-                            onClick={() => navigate(`/discussion/${project._id}`)}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out transform hover:scale-105"
-                          >
-                            Discussion
-                          </button>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => navigate(`/discussion/${project._id}`)}
+                              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out transform hover:scale-105"
+                            >
+                              Discussion
+                            </button>
+                            <button
+                              onClick={() => handleOpenUpdateModal(project)}
+                              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center"
+                            >
+                              <Edit className="mr-2" size={16} />
+                              Update Progress
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -389,6 +502,14 @@ const FreeLancerDashboard = () => {
           </section>
         )}
       </main>
+
+      {/* Progress Update Modal */}
+      <ProgressUpdateModal 
+        isOpen={isUpdateModalOpen}
+        onClose={handleCloseUpdateModal}
+        projectId={selectedProject?._id}
+        onSubmit={handleUpdateProject}
+      />
     </div>
   );
 };

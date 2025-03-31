@@ -22,14 +22,16 @@ const FreelancerProjectDetails = () => {
     } else {
       fetchProject();
     }
+    // eslint-disable-next-line
   }, []);
 
   const fetchProject = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/projects/${projectId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const res = await axios.get(
+        `http://localhost:5000/api/projects/${projectId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log("Fetched project:", res.data);
       setProject(res.data);
 
       if (res.data.questions) {
@@ -53,11 +55,20 @@ const FreelancerProjectDetails = () => {
     try {
       const formData = new FormData();
       if (resume) formData.append("resume", resume);
-      
+
+      // Debug: Log the structure of project.questions
+      console.log("project.questions in handleApply:", project.questions);
+      project.questions.forEach((q, i) => {
+        console.log(`Question #${i}:`, q, "questionText:", q.questionText);
+      });
+
+      // Map over questions and use a fallback in case questionText is not set
       const formattedAnswers = project.questions.map((q, index) => ({
-        questionText: q, 
+        questionText: q.question, // fallback to q if q.questionText is missing
         answerText: answers[index] || "",
       }));
+
+      console.log("Formatted Answers:", JSON.stringify(formattedAnswers, null, 2));
 
       formData.append("answers", JSON.stringify(formattedAnswers));
 
@@ -79,18 +90,19 @@ const FreelancerProjectDetails = () => {
     }
   };
 
-  if (loading) return (
-    <div className="flex justify-center items-center h-screen">
-      <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
 
-  if (!project) return <p className="text-center text-red-500 mt-10">Project not found.</p>;
+  if (!project)
+    return <p className="text-center text-red-500 mt-10">Project not found.</p>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <FreeLancerNavBar />
-      
       <div className="container mx-auto px-4 py-8">
         {/* Header Section */}
         <div className="flex justify-between items-center mb-8">
@@ -118,9 +130,10 @@ const FreelancerProjectDetails = () => {
               />
             )}
             <div className="p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">{project.title}</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                {project.title}
+              </h2>
               <p className="text-gray-600 mb-4">{project.description}</p>
-              
               <div className="space-y-3">
                 <div className="flex items-center text-gray-700">
                   <DollarSign className="mr-3 text-green-600" />
@@ -137,11 +150,13 @@ const FreelancerProjectDetails = () => {
                 <div className="flex items-center text-gray-700">
                   <CheckCircle className="mr-3 text-green-500" />
                   <span className="font-semibold">Status:</span>
-                  <span className={`ml-2 px-3 py-1 rounded-full text-sm ${
-                    project.status === 'open' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <span
+                    className={`ml-2 px-3 py-1 rounded-full text-sm ${
+                      project.status === "open"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
                     {project.status}
                   </span>
                 </div>
@@ -164,16 +179,18 @@ const FreelancerProjectDetails = () => {
                     <h4 className="text-lg font-semibold text-gray-700 mb-4">
                       Answer the following questions:
                     </h4>
-                    {project.questions.map((question, index) => (
+                    {project.questions.map((q, index) => (
                       <div key={index} className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">
-                          {question}
+                          {q.questionText}
                         </label>
                         <textarea
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
                           rows="3"
                           value={answers[index]}
-                          onChange={(e) => handleAnswerChange(index, e.target.value)}
+                          onChange={(e) =>
+                            handleAnswerChange(index, e.target.value)
+                          }
                           required
                         />
                       </div>

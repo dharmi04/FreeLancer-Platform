@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
 import io from "socket.io-client";
 import axios from "axios";
 import { 
@@ -26,6 +28,7 @@ const DiscussionThread = () => {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
+  const navigate = useNavigate(); // Initialize useNavigate
   const user = JSON.parse(localStorage.getItem("user"));
 
   // Fetch project details
@@ -45,6 +48,15 @@ const DiscussionThread = () => {
 
     fetchProjectDetails();
   }, [projectId]);
+
+  const goBack = () => {
+    // Navigate to the correct dashboard based on the user role
+    if (user.role === 'client') {
+      navigate('/client/dashboard');  // Redirect to client dashboard
+    } else if (user.role === 'freelancer') {
+      navigate('/freelancer/dashboard');  // Redirect to freelancer dashboard
+    }
+  };
 
   // Format timestamp
   const formatTimestamp = (timestamp) => {
@@ -133,9 +145,9 @@ const DiscussionThread = () => {
       <div className="w-1/4 bg-white border-r overflow-y-auto">
         <div className="p-4 flex items-center justify-between border-b">
           <div className="flex items-center space-x-3">
-            <Link to="/freelancer/projects">
-              <ArrowLeft className="text-gray-600" />
-            </Link>
+            
+          <ArrowLeft className="text-gray-600" onClick={goBack} />  {/* Call goBack on click */}
+           
             {project?.imageUrl && (
               <img 
                 src={`http://localhost:5000/${project.imageUrl}`} 
@@ -268,3 +280,178 @@ const DiscussionThread = () => {
 };
 
 export default DiscussionThread;
+
+
+
+// import React, { useState, useEffect, useRef } from "react";
+// import { useParams, useNavigate } from "react-router-dom"; // Import useNavigate
+// import { ArrowLeft } from "lucide-react";
+// import axios from "axios";
+// import io from "socket.io-client";
+// import EmojiPicker from 'emoji-picker-react';
+
+// const socket = io("http://localhost:5000");
+
+// const DiscussionThread = () => {
+//   const { projectId } = useParams();
+//   const [messages, setMessages] = useState([]);
+//   const [newMessage, setNewMessage] = useState("");
+//   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+//   const [project, setProject] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const messagesEndRef = useRef(null);
+//   const user = JSON.parse(localStorage.getItem("user"));
+//   const navigate = useNavigate(); // Initialize useNavigate
+
+//   // Fetch project details
+//   useEffect(() => {
+//     const fetchProjectDetails = async () => {
+//       try {
+//         const response = await axios.get(`http://localhost:5000/api/projects/${projectId}`, {
+//           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+//         });
+//         setProject(response.data);
+//         setLoading(false);
+//       } catch (error) {
+//         console.error("Error fetching project details:", error);
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchProjectDetails();
+//   }, [projectId]);
+
+//   const goBack = () => {
+//     // Navigate to the correct dashboard based on the user role
+//     if (user.role === 'client') {
+//       navigate('/client/dashboard');  // Redirect to client dashboard
+//     } else if (user.role === 'freelancer') {
+//       navigate('/freelancer/dashboard');  // Redirect to freelancer dashboard
+//     }
+//   };
+
+//   // Format timestamp
+//   const formatTimestamp = (timestamp) => {
+//     const date = new Date(timestamp);
+//     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+//   };
+
+//   // Scroll to bottom of messages
+//   const scrollToBottom = () => {
+//     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+//   };
+
+//   useEffect(() => {
+//     scrollToBottom();
+//   }, [messages]);
+
+//   useEffect(() => {
+//     if (!user) return;
+
+//     // Join the project room
+//     socket.emit("joinProject", projectId);
+
+//     // Fetch existing messages
+//     axios
+//       .get(`http://localhost:5000/api/projects/${projectId}/discussions`)
+//       .then((res) => setMessages(res.data.discussions))
+//       .catch((err) => console.error("Error fetching messages:", err));
+
+//     // Listen for new messages
+//     socket.on("messageReceived", (message) => {
+//       setMessages((prevMessages) => [...prevMessages, message]);
+//     });
+
+//     return () => {
+//       socket.off("messageReceived");
+//       socket.emit("leaveProject", projectId);
+//     };
+//   }, [projectId, user]);
+
+//   const sendMessage = async () => {
+//     const trimmedMessage = newMessage.trim();
+//     if (!trimmedMessage) return;
+
+//     const messageData = {
+//       sender: user._id,
+//       text: trimmedMessage,
+//       timestamp: new Date().toISOString()
+//     };
+
+//     try {
+//       const res = await axios.post(
+//         `http://localhost:5000/api/projects/${projectId}/discussions`,
+//         messageData
+//       );
+//       setMessages((prev) => [...prev, res.data.newMessage]);
+//       socket.emit("messageSent", res.data.newMessage);
+//       setNewMessage("");
+//       setShowEmojiPicker(false);
+//     } catch (error) {
+//       console.error("Error sending message:", error);
+//     }
+//   };
+
+//   const handleEmojiClick = (emojiObject) => {
+//     setNewMessage((prev) => prev + emojiObject.emoji);
+//   };
+
+//   if (loading) {
+//     return (
+//       <div className="flex justify-center items-center h-screen">
+//         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="flex h-screen bg-gray-100">
+//       <div className="w-1/4 bg-white border-r overflow-y-auto">
+//         <div className="p-4 flex items-center justify-between border-b">
+//           <div className="flex items-center space-x-3">
+//             <ArrowLeft className="text-gray-600" onClick={goBack} /> {/* Call goBack on click */}
+//             {project?.imageUrl && (
+//               <img 
+//                 src={`http://localhost:5000/${project.imageUrl}`} 
+//                 alt="Project" 
+//                 className="w-12 h-12 rounded-lg object-cover"
+//               />
+//             )}
+//             <div>
+//               <h2 className="font-semibold text-lg">{project?.title}</h2>
+//               <p className="text-xs text-gray-500">Project Details</p>
+//             </div>
+//           </div>
+//         </div>
+//         {/* Other content for project details... */}
+//       </div>
+
+//       <div className="flex-1 flex flex-col">
+//         {/* Messages Container */}
+//         <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#F0F2F5]">
+//           {/* Render Messages */}
+//         </div>
+
+//         {/* Message Input Area */}
+//         <div className="bg-white p-4 border-t flex items-center space-x-3">
+//           <button onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+//             😊 {/* Emoji Button */}
+//           </button>
+//           <input
+//             type="text"
+//             value={newMessage}
+//             onChange={(e) => setNewMessage(e.target.value)}
+//             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+//             placeholder="Type a message..."
+//             className="flex-1 bg-gray-100 p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+//           />
+//           <button onClick={sendMessage} className="bg-blue-500 text-white p-2 rounded-full">
+//             Send {/* Send Button */}
+//           </button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default DiscussionThread;

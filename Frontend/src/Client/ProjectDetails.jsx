@@ -9,7 +9,7 @@ import {
   FileTextIcon, 
   CalendarIcon, 
   DollarSignIcon, 
-  TagIcon 
+  TagIcon, DollarSign 
 } from "lucide-react";
 
 const ProjectDetails = () => {
@@ -114,13 +114,13 @@ const ProjectDetails = () => {
           <h1 className="text-2xl font-bold text-gray-800">Project Details</h1>
         </div>
         <div className="flex space-x-3">
-          <button
+          {/* <button
             onClick={() => navigate(`/discussion/${projectId}`)}
             className="flex items-center bg-green-50 text-green-600 px-4 py-2 rounded-md hover:bg-green-100 transition-colors"
           >
             <MessageCircleIcon className="w-5 h-5 mr-2" />
             Discussion
-          </button>
+          </button> */}
           <button
             onClick={() => navigate("/client/dashboard")}
             className="flex items-center bg-blue-50 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-100 transition-colors"
@@ -199,10 +199,10 @@ const ProjectDetails = () => {
                     >
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h4 className="text-lg font-semibold text-gray-800">
+                          <h4 className="text-lg font-semibold text-black">
                             {app.freelancer?.name}
                           </h4>
-                          <p className="text-sm text-gray-600">{app.freelancer?.email}</p>
+                          <p className="text-sm text-black">{app.freelancer?.email}</p>
                         </div>
                         <span 
                           className={`px-3 py-1 rounded-full text-xs font-medium ${getApplicationStatusColor(app.status)}`}
@@ -246,7 +246,28 @@ const ProjectDetails = () => {
                           </div>
                         )}
                       </div>
+                      {app.status === "accepted" && (
+                        <div className=" flex flex-end items-between justify-between">
+                          <button
+      onClick={() => navigate(`/discussion/${projectId}`)}
+      className="flex items-center mt-2 bg-green-50 text-green-600 px-4 py-2 rounded-md hover:bg-green-100 transition-colors ml-3"
+    >
+      <MessageCircleIcon className="w-5 h-5 mr-2" />
+      Discussion
+    </button>
 
+    <a
+      href="/payment"
+      className="flex mt-3 items-center  text-blue-600 px-4 py-2 rounded-md hover:bg-green-100 transition-colors ml-3"
+    >
+      <DollarSign className="w-5 h-5 mr-2" />
+      Pay Fees
+    </a>
+                          </div>
+    
+
+
+  )}
                       {/* Answers to Questions */}
                       {app.answers && app.answers.length > 0 && (
                         <div className="mt-4 bg-white rounded-md p-4 border border-gray-100">

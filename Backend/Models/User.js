@@ -10,7 +10,7 @@ const UserSchema = new mongoose.Schema(
     role: { type: String, enum: ["freelancer", "client"], required: true },
     // Existing fields...
 
-    // New Profile Fields
+    // Profile Fields
     profilePicture: { type: String, default: "" }, // store file path or URL
     bio: { type: String, default: "" },
     portfolioProjects: [
@@ -19,6 +19,20 @@ const UserSchema = new mongoose.Schema(
         link: String, // e.g. GitHub repo or a live site
       },
     ],
+    
+    // Social media stats
+    following: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      }
+    ],
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      }
+    ]
   },
   { timestamps: true }
 );
@@ -30,5 +44,10 @@ UserSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
+
+// Method to compare password for login
+UserSchema.methods.comparePassword = async function(candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 
 module.exports = mongoose.model("User", UserSchema);
