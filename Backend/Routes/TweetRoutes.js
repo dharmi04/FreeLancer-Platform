@@ -52,27 +52,30 @@ router.get("/:id", async (req, res) => {
 // Create a tweet
 router.post("/", auth, async (req, res) => {
   try {
-    const { content, media, tags } = req.body;
-    
-    if (!content && !media) {
+    console.log("User making request:", req.user); // Debugging
+
+    const { content, tags } = req.body;
+
+    if (!content) {
       return res.status(400).json({ message: "Tweet must contain content or media" });
+    }
+
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "Unauthorized: User not found" });
     }
 
     const newTweet = new Tweet({
       userId: req.user.id,
       content,
-      media: media || "",
       tags: tags || []
     });
-
+    const userId = req.user.id;
     const tweet = await newTweet.save();
-    
-    // Populate user info before sending response
     const populatedTweet = await Tweet.findById(tweet._id).populate("userId", "name profilePicture");
-    
+
     res.status(201).json(populatedTweet);
   } catch (err) {
-    console.error(err);
+    console.error("Tweet creation error:", err);
     res.status(500).json({ message: "Server Error" });
   }
 });

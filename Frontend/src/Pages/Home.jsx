@@ -81,6 +81,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Search, CheckCircle, Globe, Star, ArrowRight } from 'lucide-react';
+import image from '../assets/logo.png'
 
 const Home = () => {
   return (
@@ -89,8 +90,9 @@ const Home = () => {
       <nav className="sticky top-0 z-50 bg-white shadow-md">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="text-2xl font-bold text-blue-600">SkillSync</div>
+          {/* <img src={image} className='w-40 h-30' /> */}
           <div className="flex space-x-6 items-center">
-            <Link to="/find-projects" className="hover:text-blue-600 transition">Find Projects</Link>
+            <Link to="/find-projects" className="hover:text-blue-600 transition text-sm md:text-lg">Find Projects</Link>
             <Link to="/find-freelancers" className="hover:text-blue-600 transition">Find Freelancers</Link>
             <Link to="/login" className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">Login</Link>
             <Link to="/signup" className="px-4 py-2 border border-blue-500 text-blue-500 rounded-md hover:bg-blue-500 hover:text-white transition">Sign Up</Link>
@@ -202,6 +204,7 @@ const Home = () => {
       <footer className="bg-gray-900 text-white py-16">
         <div className="container mx-auto px-4 grid md:grid-cols-4 gap-8">
           <div>
+            
             <h4 className="text-2xl font-bold mb-4">SkillSync</h4>
             <p className="text-gray-400">Connecting talents with opportunities worldwide.</p>
           </div>

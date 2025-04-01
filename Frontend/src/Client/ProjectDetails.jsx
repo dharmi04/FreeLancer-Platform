@@ -9,7 +9,8 @@ import {
   FileTextIcon, 
   CalendarIcon, 
   DollarSignIcon, 
-  TagIcon, DollarSign 
+  TagIcon, 
+  DollarSign 
 } from "lucide-react";
 
 const ProjectDetails = () => {
@@ -17,7 +18,9 @@ const ProjectDetails = () => {
   const navigate = useNavigate();
   
   const [project, setProject] = useState(null);
+  const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [updatesLoading, setUpdatesLoading] = useState(true);
   
   const user = JSON.parse(localStorage.getItem("user"));
   const token = localStorage.getItem("token");
@@ -27,6 +30,7 @@ const ProjectDetails = () => {
       navigate("/login");
     } else {
       fetchProjectDetails();
+      fetchProjectUpdates();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -43,6 +47,21 @@ const ProjectDetails = () => {
       console.error("Failed to fetch project details:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProjectUpdates = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/projects/${projectId}/updates`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setUpdates(res.data.updates);
+    } catch (error) {
+      console.error("Failed to fetch project updates:", error);
+    } finally {
+      setUpdatesLoading(false);
     }
   };
 
@@ -114,13 +133,6 @@ const ProjectDetails = () => {
           <h1 className="text-2xl font-bold text-gray-800">Project Details</h1>
         </div>
         <div className="flex space-x-3">
-          {/* <button
-            onClick={() => navigate(`/discussion/${projectId}`)}
-            className="flex items-center bg-green-50 text-green-600 px-4 py-2 rounded-md hover:bg-green-100 transition-colors"
-          >
-            <MessageCircleIcon className="w-5 h-5 mr-2" />
-            Discussion
-          </button> */}
           <button
             onClick={() => navigate("/client/dashboard")}
             className="flex items-center bg-blue-50 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-100 transition-colors"
@@ -151,7 +163,7 @@ const ProjectDetails = () => {
             )}
           </div>
 
-          {/* Right Column - Project Details and Applications */}
+          {/* Right Column - Project Details, Applications & Updates */}
           <div className="md:col-span-2 space-y-6">
             {/* Project Info Card */}
             <div className="bg-white rounded-xl shadow-md p-6">
@@ -189,7 +201,6 @@ const ProjectDetails = () => {
             {/* Applications Section */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-2xl font-bold text-gray-800 mb-6">Freelancer Applications</h3>
-              
               {project.applications && project.applications.length > 0 ? (
                 <div className="space-y-6">
                   {project.applications.map((app) => (
@@ -247,27 +258,23 @@ const ProjectDetails = () => {
                         )}
                       </div>
                       {app.status === "accepted" && (
-                        <div className=" flex flex-end items-between justify-between">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-2">
                           <button
-      onClick={() => navigate(`/discussion/${projectId}`)}
-      className="flex items-center mt-2 bg-green-50 text-green-600 px-4 py-2 rounded-md hover:bg-green-100 transition-colors ml-3"
-    >
-      <MessageCircleIcon className="w-5 h-5 mr-2" />
-      Discussion
-    </button>
-
-    <a
-      href="/payment"
-      className="flex mt-3 items-center  text-blue-600 px-4 py-2 rounded-md hover:bg-green-100 transition-colors ml-3"
-    >
-      <DollarSign className="w-5 h-5 mr-2" />
-      Pay Fees
-    </a>
-                          </div>
-    
-
-
-  )}
+                            onClick={() => navigate(`/discussion/${projectId}`)}
+                            className="flex items-center bg-green-50 text-green-600 px-4 py-2 rounded-md hover:bg-green-100 transition-colors"
+                          >
+                            <MessageCircleIcon className="w-5 h-5 mr-2" />
+                            Discussion
+                          </button>
+                          <a
+                            href="/payment"
+                            className="flex items-center text-blue-600 px-4 py-2 rounded-md hover:bg-green-100 transition-colors"
+                          >
+                            <DollarSign className="w-5 h-5 mr-2" />
+                            Pay Fees
+                          </a>
+                        </div>
+                      )}
                       {/* Answers to Questions */}
                       {app.answers && app.answers.length > 0 && (
                         <div className="mt-4 bg-white rounded-md p-4 border border-gray-100">
@@ -296,6 +303,32 @@ const ProjectDetails = () => {
                   <p className="text-lg">No applications received yet.</p>
                   <p className="text-sm">Freelancers will apply to your project soon.</p>
                 </div>
+              )}
+            </div>
+
+            {/* Project Updates Section */}
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h3 className="text-2xl font-bold text-gray-800 mb-6">Project Updates</h3>
+              {updatesLoading ? (
+                <div className="flex justify-center items-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500"></div>
+                </div>
+              ) : updates && updates.length > 0 ? (
+                <ul className="space-y-4">
+                  {updates.map((update, idx) => (
+                    <li key={idx} className="p-4 border rounded-md">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-800 font-semibold">Progress: {update.progress}%</span>
+                        <span className="text-gray-500 text-sm">
+                          {new Date(update.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-gray-600">{update.note}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500">No updates available for this project.</p>
               )}
             </div>
           </div>

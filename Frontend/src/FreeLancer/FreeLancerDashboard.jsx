@@ -181,6 +181,7 @@
 // export default FreeLancerDashboard;
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import axios from "axios";
 import { 
   Briefcase, 
@@ -376,11 +377,11 @@ const FreeLancerDashboard = () => {
             Explore Projects
           </button>
           <button
-            onClick={() => navigate("/my-jobs")}
+            onClick={() => navigate("/create-tweet")}
             className="w-full flex items-center px-4 py-3 bg-gray-800 hover:bg-blue-600 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
           >
             <Briefcase className="mr-3" size={20} />
-            My Jobs
+            Tweet
           </button>
           <button
             onClick={() => navigate("/freelancer/my-profile")}

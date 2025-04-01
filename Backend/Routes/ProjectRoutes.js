@@ -533,48 +533,84 @@ router.post("/:projectId/update", protect , async (req, res) => {
   }
 });
 
-
-
-router.get("/projects/updates", protect, async (req, res) => {
+// GET all updates for all projects of the authenticated client
+router.get("/updates", protect, async (req, res) => {
   try {
-    const clientId = req.user.id; // Assuming clientId comes from the authenticated user
-    if (!clientId) {
-      return res.status(400).json({ message: "Client ID is required" });
-    }
-
-    // Fetch all projects related to this client
-    const projects = await Project.find({ clientId }).select("_id");
-    const projectIds = projects.map((project) => project._id);
-
-    // Fetch all updates related to these projects
-    const updates = await Update.find({ projectId: { $in: projectIds } })
-      .populate("projectId", "name") // Populate project name
-      .sort({ createdAt: -1 }); // Sort updates by latest first
-
-    res.status(200).json({ updates });
+    console.log("Authenticated user:", req.user); // Check if req.user is populated
+    const clientId = req.user.id;
+    
+    // Fetch projects where the client field matches the authenticated user's ID
+    const projects = await Project.find({ client: clientId });
+    console.log("Fetched projects:", projects);
+    
+    let allUpdates = [];
+    projects.forEach((project) => {
+      if (project.updates && Array.isArray(project.updates)) {
+        project.updates.forEach((update) => {
+          // Safely convert to a plain object if possible
+          const updateObj = (update && typeof update.toObject === "function")
+            ? update.toObject()
+            : update;
+          allUpdates.push({
+            projectId: project._id,
+            ...updateObj,
+          });
+        });
+      } else {
+        console.log(`Project ${project._id} has no updates array or it's not an array.`);
+      }
+    });
+    
+    console.log("Aggregated updates before sorting:", allUpdates);
+    
+    allUpdates.sort((a, b) => {
+      const dateA = a.timestamp ? new Date(a.timestamp) : new Date(0);
+      const dateB = b.timestamp ? new Date(b.timestamp) : new Date(0);
+      return dateB - dateA;
+    });
+    
+    return res.status(200).json({ updates: allUpdates });
   } catch (error) {
-    console.error("Error fetching project updates:", error);
-    res.status(500).json({ message: "Internal server error" });
+    // Log full error details to the console
+    console.error("Error in /updates endpoint:", error.message);
+    console.error(error.stack);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
 
 
+// GET updates for a specific project by projectId
+router.get("/:projectId/updates", protect, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const userId = req.user.id; // The authenticated user's ID
 
+    // Find the project by ID
+    const project = await Project.findById(projectId);
 
-router.get("/project-updates", async (req, res) => {
-    try {
-        const updates = [
-            { id: 1, title: "Project Started", date: "2025-03-31" },
-            { id: 2, title: "Design Phase Completed", date: "2025-04-01" }
-        ];
-
-        res.status(200).json({ updates });
-    } catch (error) {
-        console.error("Error fetching project updates:", error);
-        res.status(500).json({ message: "Server error" });
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
     }
+
+    // Optionally, ensure that the authenticated user is authorized to view the updates.
+    // For example, only the client or the assigned freelancer can access the updates.
+    if (
+      project.client.toString() !== userId &&
+      (!project.freelancer || project.freelancer.toString() !== userId)
+    ) {
+      return res.status(403).json({ message: "Not authorized to view updates" });
+    }
+
+    // Return the updates
+    return res.status(200).json({ updates: project.updates });
+  } catch (error) {
+    console.error("Error fetching updates for project:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
 });
+
+
 
 
 

@@ -13,6 +13,8 @@ import FreeLancerprofile from "./FreeLancer/FreeLancerprofile"
 import FreelancerProfileSetup from "./FreeLancer/FreeLancerProfileSetup"
 import DiscussionThread from "./Components/DiscussionThread"
 import UserProfile from "./Pages/UserProfile"
+import Tweet from "./Tweet/Tweet"
+import CreateTweet from "./Tweet/CreateTweet"
 function App() {
 
   return (
@@ -38,6 +40,8 @@ function App() {
 
         <Route path="/discussion/:projectId" element={<DiscussionThread />} />
         {/* <Route path="/client/:clientId" element={<ClientProfile/>} /> */}
+        <Route path="/tweet" element={<Tweet />} />
+        <Route path="/create-tweet" element={<CreateTweet />} />
         </Routes>
       </Router>
     </>

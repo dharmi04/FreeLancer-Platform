@@ -17,7 +17,7 @@ const server = http.createServer(app); // Wrap Express in HTTP server
 // Configure Socket.io
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Ensure this matches your frontend URL
+    origin: "*", // Ensure this matches your frontend URL
     methods: ["GET", "POST"],
   },
 });
