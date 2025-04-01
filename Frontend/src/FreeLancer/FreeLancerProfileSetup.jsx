@@ -21,6 +21,37 @@ const FreelancerProfileSetup = () => {
     }
   }, [navigate, token, user]);
 
+  // Fetch user data from API to autofill the form if available
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (token) {
+        try {
+          const res = await axios.get("http://localhost:5000/api/users/profile", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          // If user data exists, set the form data state
+          const { profilePicture, bio, portfolioProjects } = res.data.user;
+          setFormData({
+            profilePicture: profilePicture || null,
+            bio: bio || "",
+            portfolioProjects: portfolioProjects.length ? portfolioProjects : [{ title: "", link: "" }],
+          });
+
+          if (profilePicture) {
+            setPreviewUrl(profilePicture);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [token]);
+
   // Handle image preview
   useEffect(() => {
     if (!formData.profilePicture) {
@@ -56,7 +87,7 @@ const FreelancerProfileSetup = () => {
   const addProject = () => {
     setFormData({
       ...formData,
-      portfolioProjects: [...formData.portfolioProjects, { title: "", link: "" }]
+      portfolioProjects: [...formData.portfolioProjects, { title: "", link: "" }],
     });
   };
 
@@ -68,15 +99,15 @@ const FreelancerProfileSetup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const submitData = new FormData();
       submitData.append("bio", formData.bio);
-      
+
       if (formData.profilePicture) {
         submitData.append("profilePicture", formData.profilePicture);
       }
-      
+
       // Add portfolio projects
       submitData.append("portfolioProjects", JSON.stringify(formData.portfolioProjects));
 
@@ -89,10 +120,10 @@ const FreelancerProfileSetup = () => {
 
       // Update localStorage with updated user data
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      
+
       // Success notification
       alert("Profile setup completed successfully!");
-      
+
       // Navigate to freelancer dashboard
       navigate("/freelancer/dashboard");
     } catch (error) {
@@ -111,7 +142,7 @@ const FreelancerProfileSetup = () => {
             <h1 className="text-2xl font-bold text-white">Setup Your Freelancer Profile</h1>
             <p className="text-blue-100 mt-1">Complete your profile to start getting hired</p>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="p-6">
             <div className="space-y-6">
               {/* Profile Picture Section */}
@@ -119,9 +150,9 @@ const FreelancerProfileSetup = () => {
                 <div className="flex-shrink-0">
                   <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-2 border-blue-500">
                     {previewUrl ? (
-                      <img 
-                        src={previewUrl} 
-                        alt="Profile Preview" 
+                      <img
+                        src={previewUrl}
+                        alt="Profile Preview"
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -133,7 +164,7 @@ const FreelancerProfileSetup = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex-grow">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Profile Picture
@@ -144,7 +175,6 @@ const FreelancerProfileSetup = () => {
                       accept="image/*"
                       onChange={handleFileChange}
                       className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                      required
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
@@ -152,7 +182,7 @@ const FreelancerProfileSetup = () => {
                   </p>
                 </div>
               </div>
-              
+
               {/* Bio Section */}
               <div>
                 <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
@@ -169,7 +199,7 @@ const FreelancerProfileSetup = () => {
                 ></textarea>
                 <p className="text-xs text-gray-500 mt-1">Briefly describe your skills, experience, and what makes you unique</p>
               </div>
-              
+
               {/* Portfolio Projects Section */}
               <div>
                 <div className="flex justify-between items-center mb-2">
@@ -187,7 +217,7 @@ const FreelancerProfileSetup = () => {
                     Add Project
                   </button>
                 </div>
-                
+
                 <div className="space-y-3">
                   {formData.portfolioProjects.map((project, index) => (
                     <div key={index} className="bg-gray-50 p-4 rounded-md relative">
@@ -202,7 +232,7 @@ const FreelancerProfileSetup = () => {
                           </svg>
                         </button>
                       )}
-                      
+
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
                           <label className="block text-xs font-medium text-gray-500 mb-1">
@@ -216,7 +246,7 @@ const FreelancerProfileSetup = () => {
                             placeholder="E-commerce Website"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-xs font-medium text-gray-500 mb-1">
                             Project Link
@@ -233,12 +263,12 @@ const FreelancerProfileSetup = () => {
                     </div>
                   ))}
                 </div>
-                
+
                 {formData.portfolioProjects.length === 0 && (
                   <p className="text-sm text-gray-500 italic">No projects added yet.</p>
                 )}
               </div>
-              
+
               {/* Submit Button */}
               <div className="flex items-center justify-end space-x-3 pt-4 border-t">
                 <button
@@ -256,13 +286,13 @@ const FreelancerProfileSetup = () => {
                   {loading ? (
                     <>
                       <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeLinecap="round"></circle>
+                        <path fill="currentColor" d="M4 12a8 8 0 0116 0" />
                       </svg>
                       Saving...
                     </>
                   ) : (
-                    'Save Profile'
+                    "Save Profile"
                   )}
                 </button>
               </div>

@@ -56,7 +56,7 @@ const Login = () => {
         alert("Login successful!");
 
         if (data.user.role === "freelancer") {
-          navigate(data.user.profilePicture ? "/freelancer/dashboard" : "/freelancer/setup-profile");
+          navigate("/freelancer/dashboard");
         } else if (data.user.role === "client") {
           navigate("/client/dashboard");
         } else {

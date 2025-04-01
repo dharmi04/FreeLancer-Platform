@@ -123,6 +123,9 @@ useEffect(() => {
   const handleAddProject = () => {
     navigate("/client/AddProject");
   };
+  const handleMemos = () => {
+    navigate("/all-tweet");
+  };
 
   const handleViewProject = (projectId) => {
     navigate(`/client/projects/${projectId}`);
@@ -213,6 +216,14 @@ useEffect(() => {
                 >
                   <PlusIcon className="w-5 h-5 mr-2" />
                   Create New Project
+                </button>
+
+                <button
+                  onClick={handleMemos}
+                  className="w-full flex items-center justify-center bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 transition-colors mb-3"
+                >
+                  <PlusIcon className="w-5 h-5 mr-2" />
+                  Go to Memos
                 </button>
               </div>
             </div>

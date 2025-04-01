@@ -282,6 +282,8 @@ const FreeLancerDashboard = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const token = localStorage.getItem("token");
 
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+
 
   useEffect(() => {
     if (!token || user?.role !== "freelancer") {
@@ -377,11 +379,11 @@ const FreeLancerDashboard = () => {
             Explore Projects
           </button>
           <button
-            onClick={() => navigate("/create-tweet")}
+            onClick={() => navigate("/all-tweet")}
             className="w-full flex items-center px-4 py-3 bg-gray-800 hover:bg-blue-600 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
           >
             <Briefcase className="mr-3" size={20} />
-            Tweet
+           Memos
           </button>
           <button
             onClick={() => navigate("/freelancer/my-profile")}
@@ -411,6 +413,8 @@ const FreeLancerDashboard = () => {
               Freelancer Dashboard
             </h1>
             <p className="text-gray-600 mt-2">Welcome back, {user?.name}</p>
+            {/* <a href={`/user-tweet/${currentUser.name}`} className="text-3xl font-bold text-blue-700">
+  {currentUser.name}! </a> */}
 
           </div>
           

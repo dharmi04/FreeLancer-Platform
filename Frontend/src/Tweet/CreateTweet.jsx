@@ -7,7 +7,7 @@ const CreateTweet = ({ onTweetCreated }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("token"); // Retrieve once
+  const token = localStorage.getItem("token"); // Retrieve token once
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,8 +27,8 @@ const CreateTweet = ({ onTweetCreated }) => {
       setError("");
 
       const response = await axios.post(
-        "http://localhost:5000/api/tweets",
-        { content: tweetContent, tags: tags.split(",").map(tag => tag.trim()) }, // Send tags as an array
+        'http://localhost:5000/api/tweets', // Use VITE_URL here
+        { content: tweetContent, tags: tags.split(",").map(tag => tag.trim()) },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -62,7 +62,7 @@ const CreateTweet = ({ onTweetCreated }) => {
         <div className="mb-3">
           <textarea
             placeholder="What's happening?"
-            value={tweetContent} // Use tweetContent here
+            value={tweetContent}
             onChange={(e) => setTweetContent(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             rows="3"
@@ -89,7 +89,7 @@ const CreateTweet = ({ onTweetCreated }) => {
           <button
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-            disabled={isLoading || !tweetContent.trim()} // Ensure correct disabling
+            disabled={isLoading || !tweetContent.trim()}
           >
             {isLoading ? "Posting..." : "Tweet"}
           </button>
